@@ -1,0 +1,35 @@
+#!/bin/ash
+
+usage()
+{
+echo "Usage: $0 [listen|net <dest>|sto <path>]"
+exit 1
+}
+
+arg_count=$#
+
+if [ $arg_count -eq 0 ] ; then
+    usage
+else
+    action=$1
+fi
+
+case "$action" in
+   "listen") iperf3 -s
+   exit 0
+   ;;
+   "net") [ $arg_count -ne 2 ] && usage
+   iperf3 -c $2 -i.5 -O 2
+   exit 1
+   ;;
+   "sto") [ $arg_count -ne 2 ] && usage
+    fio --name=JEDEC219 --directory=$2/ --numjobs=4 --size=650M --time_based --runtime=180s --ramp_time=20s --ioengine=libaio \
+    --direct=1 --rw=randrw --norandommap --randrepeat=0 --rwmixread=40 --rwmixwrite=60 --iodepth=256 \
+    --bssplit='512/4:1024/1:1536/1:2048/1:2560/1:3072/1:3584/1:4k/67:8k/10:16k/7:32k/3:64k/3' --blockalign=4k \
+    --random_distribution=zoned:50/5:30/15:20/80 --group_reporting --eta-newline=1
+    exit 0
+   ;;
+   *)
+   usage
+   ;;
+esac
